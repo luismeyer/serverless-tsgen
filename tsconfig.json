@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "CommonJS",
+    "strict": true,
+    "declaration": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "experimentalDecorators": true,
+    "rootDir": "src",
+    "sourceRoot": "src",
+    "outDir": "lib",
+    "sourceMap": true,
+    "listFiles": false,
+    "newLine": "LF",
+    "noEmitOnError": false,
+    "esModuleInterop": true
+  },
+  "exclude": ["node_modules", "examples", "lib"]
+}

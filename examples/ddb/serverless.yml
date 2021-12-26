@@ -1,0 +1,51 @@
+service: ddb-example
+
+provider:
+  memorySize: 128
+  name: aws
+  region: eu-central-1
+  runtime: nodejs14.x
+  stage: dev
+
+custom:
+  tsgen:
+    outfile: src/serverless.ts
+    services:
+      - ddb
+
+plugins:
+  - ../../lib/main.js
+
+resources:
+  Resources:
+    UserTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: birth
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: nameBirthIndex
+            KeySchema:
+              - AttributeName: name
+                KeyType: RANGE
+              - AttributeName: birth
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: nameIndex
+            KeySchema:
+              - AttributeName: name
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TableName: qzmkr-table
