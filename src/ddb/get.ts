@@ -31,6 +31,7 @@ const generic = "T";
  */
 export const createGetItem = (table: DynamoDBResource): string | undefined => {
   const { TableName, AttributeDefinitions, KeySchema } = table.Properties;
+  log("debug", `Creating DynamoDB getItem function for table "${TableName}"`);
 
   const funcName = `get${camelcase(TableName, { pascalCase: true })}`;
 

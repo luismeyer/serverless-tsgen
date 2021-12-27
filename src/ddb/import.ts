@@ -1,3 +1,5 @@
+import { log } from "../logger";
+
 export const DocumentClient = "DocumentClient";
 export const dbClient = "ddbClient";
 
@@ -7,6 +9,8 @@ export const dbClient = "ddbClient";
  * @returns Import and service decleration node
  */
 export const createDDBImport = (region?: string): string => {
+  log("debug", "Creating DynamoDB imports");
+
   const options = JSON.stringify({ region });
 
   return `

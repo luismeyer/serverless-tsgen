@@ -9,11 +9,16 @@ import { createDDBTypes } from "./types";
 export const DDB_KEY = "ddb";
 
 export const ddbLink: ChainLink = {
+  name: "DynamoDB",
   canHandle: ({ service }) => {
-    return Boolean(service.custom?.tsgen.services.includes(DDB_KEY));
+    return (
+      !service.custom?.tsgen?.resources ||
+      Boolean(service.custom.tsgen.resources.includes(DDB_KEY))
+    );
   },
   handle: ({ service }) => {
     if (!service.resources) {
+      log("debug", "No cloudformation resources to handle");
       return;
     }
 
@@ -40,6 +45,8 @@ export const ddbLink: ChainLink = {
     );
 
     ddbTables.forEach(([key, tableDefinition]) => {
+      log("debug", `Handling DynamoDB resource ${key}`);
+
       if (!tableDefinition.Properties.TableName) {
         return log(
           "warning",

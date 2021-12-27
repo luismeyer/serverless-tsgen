@@ -4,15 +4,20 @@ import { resolve } from "path";
 import { log } from "./logger";
 import { Custom } from "./types";
 
-let outputFile = "tsgen.ts";
+// default output file
+let outputFile = "serverless.ts";
+
 let outputData: string[] = [];
 
 export const initOutput = (custom?: Custom) => {
   if (!custom) {
+    log("notice", "Missing custom config in serverless.yml");
     return;
   }
 
-  outputFile = resolve(custom.tsgen.outfile);
+  if (custom.tsgen?.outfile) {
+    outputFile = resolve(custom.tsgen.outfile);
+  }
 
   if (existsSync(outputFile)) {
     rmSync(outputFile, { force: true });

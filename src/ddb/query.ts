@@ -41,6 +41,8 @@ export const createQueryGSI = (
     );
   }
 
+  log("debug", `Creating DynamoDB queryGSI function for index: "${IndexName}"`);
+
   const parsedIndexName = camelcase(IndexName, { pascalCase: true });
   const parsedTablename = camelcase(TableName, { pascalCase: true });
   const funcName = `query${parsedTablename}${parsedIndexName}`;

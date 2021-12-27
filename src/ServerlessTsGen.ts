@@ -4,20 +4,25 @@ import { generateOutput, initOutput } from "./generator";
 import { initLogger, log } from "./logger";
 import { Serverless, ServerlessPlugin } from "./types";
 
-const chain = new Chain().addLink(ddbLink);
+const chain = new Chain().append(ddbLink);
 
 export class ServerlessTSGen extends ServerlessPlugin {
   constructor(serverless: Serverless) {
     super();
 
-    initOutput(serverless.service.custom);
-
+    /**
+     * For v2 the cli only supports one logging function. In
+     * v3 we can change the logging behaviour easily by
+     * plugging the new log functions into our logger
+     */
     initLogger({
       debug: serverless.cli.log,
       error: serverless.cli.log,
       notice: serverless.cli.log,
       warning: serverless.cli.log,
     });
+
+    initOutput(serverless.service.custom);
 
     this.commands = {
       tsgen: {
@@ -28,7 +33,7 @@ export class ServerlessTSGen extends ServerlessPlugin {
 
     this.hooks = {
       "tsgen:run": () => {
-        log("notice", "Run tsgen plugin");
+        log("notice", "Execute tsgen plugin");
 
         chain.execute(serverless);
       },

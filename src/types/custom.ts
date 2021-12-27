@@ -1,6 +1,6 @@
 export type Custom = {
-  tsgen: {
-    outfile: string;
-    services: string[];
+  tsgen?: {
+    outfile?: string;
+    resources?: string[];
   };
 };

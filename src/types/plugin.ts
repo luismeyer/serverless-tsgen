@@ -26,7 +26,7 @@ export type Command = {
   options?: Record<string, CommandOption>;
 };
 
-export abstract class ServerlessPlugin {
+export class ServerlessPlugin {
   hooks?: Hooks;
   commands?: Record<string, Command>;
 }

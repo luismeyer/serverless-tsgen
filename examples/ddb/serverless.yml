@@ -10,7 +10,7 @@ provider:
 custom:
   tsgen:
     outfile: src/serverless.ts
-    services:
+    resources:
       - ddb
 
 plugins:
