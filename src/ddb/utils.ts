@@ -74,8 +74,8 @@ const createKeyCondition = (key: string) =>
   `${attributeNameKey(key)} = ${attributeValueKey(key)}`;
 
 /**
- * Creates String to find item in DDB
- * looks like this: '#key = :key and #key1 and :key1'
+ * Creates String to find items in DDB which
+ * looks like this: '#key = :key and #key1 = :key1'
  * @param requiredKeys The Object-Keys that contain
  * @returns DDB String
  */
@@ -88,15 +88,33 @@ export const createKeyConditionExpression = (
     .map(createKeyCondition)
     .join(" and ");
 
-  const optionalCondition = optionalKeys.map(
-    (key) => `\${ ${key} ? " and ${createKeyCondition(key)}" : ""}`
-  );
+  let optionalCondition = "";
 
-  return requiredCondition + optionalCondition;
+  if (optionalKeys.length) {
+    const parsedOptionalKeys = optionalKeys
+      .map((key) => `( ${key} ? " and ${createKeyCondition(key)}" : "" )`)
+      .join(" + ");
+
+    optionalCondition = " + " + parsedOptionalKeys;
+  }
+
+  return `"${requiredCondition}" ${optionalCondition}`;
 };
 
+/**
+ * Creates a name expression which should be included
+ * in the expressionAttributeNames for DDB requests
+ * @param key column key
+ * @returns string with a name expression
+ */
 export const createNameExpression = (key: string) =>
   `"${attributeNameKey(key)}": "${key}"`;
 
+/**
+ * Creates a value expression which should be included
+ * in the expressionAttributeValues for DDB requests
+ * @param key column key
+ * @returns string with a name expression
+ */
 export const createValueExpression = (key: string) =>
   `"${attributeValueKey(key)}": ${key}`;

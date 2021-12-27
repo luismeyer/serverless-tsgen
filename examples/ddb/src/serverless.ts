@@ -65,9 +65,8 @@ export async function queryQzmkrTableNameBirthIndex<T>(
         ":birth": birth,
         ...(name ? { ":name": name } : {}),
       },
-      KeyConditionExpression: `#birth = :birth${
-        name ? " and #name = :name" : ""
-      }`,
+      KeyConditionExpression:
+        "#birth = :birth" + (name ? " and #name = :name" : ""),
     })
     .promise();
 
@@ -101,7 +100,7 @@ export async function queryQzmkrTableNameIndex<T>(
       ExpressionAttributeValues: {
         ":name": name,
       },
-      KeyConditionExpression: `#name = :name`,
+      KeyConditionExpression: "#name = :name",
     })
     .promise();
 

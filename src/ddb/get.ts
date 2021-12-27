@@ -2,7 +2,8 @@ import camelcase from "camelcase";
 
 import { log } from "../logger";
 import { DynamoDBResource } from "../types";
-import { DocumentClient } from "./import";
+import { buildFunction } from "../typescript/function";
+import { dbClient, DocumentClient } from "./import";
 import {
   DDBResultDataKey,
   DDBResultErrorKey,
@@ -11,15 +12,17 @@ import {
 } from "./types";
 import { typeDefinition } from "./utils";
 
-const GetItemOptions = "GetItemOptions";
+const GetItemOptionsType = "GetItemOptions";
 const ErrorMessage = "Get item error";
 
 /**
  * Reduced get item options. Based on GetItemInput of AWS sdk
  */
-export const GetItemOptionsType = `
-  type ${GetItemOptions} = Omit<${DocumentClient}.GetItemInput, "TableName" | "Key">;
+export const GetItemOptions = `
+  type ${GetItemOptionsType} = Omit<${DocumentClient}.GetItemInput, "TableName" | "Key">;
 `;
+
+const generic = "T";
 
 /**
  * Creates the GetItem function
@@ -37,7 +40,6 @@ export const createGetItem = (
   }
 
   const funcName = `get${camelcase(TableName, { pascalCase: true })}`;
-  const generic = "T";
 
   const hashKey = KeySchema.find((key) => key.KeyType === "HASH");
   if (!hashKey) {
@@ -57,31 +59,41 @@ export const createGetItem = (
     );
   }
 
-  const args = `${hashKey.AttributeName}: ${hashKeyType}, options?: ${GetItemOptions}`;
+  const args = [
+    { name: hashKey.AttributeName, type: hashKeyType },
+    { name: "options", type: GetItemOptionsType, optional: true },
+  ];
 
-  return `
-    export async function ${funcName}<${generic}>(${args}): Promise<${DDBResultType}<${generic}>> {
-      const res = await ddbClient
-        .get({
-          ...options,
-          TableName: "${TableName}", 
-          Key: { ${hashKey.AttributeName} }
-        })
-        .promise();
+  const body = `
+    const res = await ${dbClient}
+      .get({
+        ...options,
+        TableName: "${TableName}", 
+        Key: { ${hashKey.AttributeName} }
+      })
+      .promise();
 
-      if (res.$response.error || !res.Item) {
-        return {
-          ${DDBResultSuccessKey}: false,
-          ${DDBResultErrorKey}: res.$response.error
-            ? res.$response.error.message
-            : "${ErrorMessage}",
-        };
-      }
-
+    if (res.$response.error || !res.Item) {
       return {
-        ${DDBResultSuccessKey}: true,
-        ${DDBResultDataKey}: res.Item as ${generic},
+        ${DDBResultSuccessKey}: false,
+        ${DDBResultErrorKey}: res.$response.error
+          ? res.$response.error.message
+          : "${ErrorMessage}",
       };
     }
+
+    return {
+      ${DDBResultSuccessKey}: true,
+      ${DDBResultDataKey}: res.Item as ${generic},
+    };
   `;
+
+  return buildFunction({
+    args,
+    body,
+    name: funcName,
+    generics: [generic],
+    returnType: `${DDBResultType}<${generic}>`,
+    async: true,
+  });
 };

@@ -3,11 +3,13 @@ import camelcase from "camelcase";
 
 import { log } from "../logger";
 import { DynamoDBResource } from "../types";
+import { buildFunction, FunctionArg } from "../typescript/function";
 import { dbClient, DocumentClient } from "./import";
 import {
   DDBResultDataKey,
   DDBResultErrorKey,
   DDBResultSuccessKey,
+  DDBResultType,
 } from "./types";
 import {
   createKeyConditionExpression,
@@ -28,18 +30,13 @@ export const QueryItemOptionsType = `
 `;
 
 const generic = "T";
-export const createQueryGSI = (
-  table: DynamoDBResource,
-  { IndexName, KeySchema }: GlobalSecondaryIndexInfo
-): string | undefined => {
-  const {
-    Properties: { TableName, AttributeDefinitions },
-  } = table;
 
+export const createQueryGSI = (
+  { Properties: { TableName, AttributeDefinitions } }: DynamoDBResource,
+  { IndexName, KeySchema }: GlobalSecondaryIndexInfo
+): string => {
   if (!IndexName) {
-    throw new Error(
-      `Missing index name in table: ${table.Properties.TableName}`
-    );
+    throw new Error(`Missing index name in table: ${TableName}`);
   }
 
   const parsedIndexName = camelcase(IndexName, { pascalCase: true });
@@ -47,7 +44,7 @@ export const createQueryGSI = (
   const funcName = `query${parsedTablename}${parsedIndexName}`;
 
   if (!KeySchema) {
-    return void log("warning", `Missing key schema for ${IndexName}`);
+    throw new Error(`Missing key schema for ${IndexName}`);
   }
 
   let hash: string | undefined;
@@ -86,15 +83,21 @@ export const createQueryGSI = (
   }
 
   // extra argument if a range key is given
-  let rangeArg = "";
+  let rangeArg: FunctionArg[] = [];
 
   let rangeNameExp = "";
   let rangeValueExp = "";
 
-  let optionalExpKeys: string[] = [];
+  let optionalConditionKeys: string[] = [];
 
+  /**
+   * if a range key is given in the gsi definition
+   * we still have to implement the query without a
+   * range key since ddb allows it. So we have to check
+   * the range key at generationtime and at runtime
+   */
   if (range) {
-    rangeArg = `, ${range}?: ${rangeType}`;
+    rangeArg = [{ name: range, type: rangeType ?? "", optional: true }];
 
     const rangeName = createNameExpression(range);
     const rangeValue = createValueExpression(range);
@@ -106,11 +109,16 @@ export const createQueryGSI = (
     rangeNameExp = `...(${range} ? { ${rangeName} } : {})`;
     rangeValueExp = `...(${range} ? { ${rangeValue} } : {})`;
 
-    optionalExpKeys = [range];
+    // add the range key to the condition expression
+    optionalConditionKeys = [range];
   }
 
   // arguments of the functions
-  const args = `${hash}: ${hashType} ${rangeArg}, options?: ${QueryItemsOptions}`;
+  const args: FunctionArg[] = [
+    { name: hash, type: hashType },
+    ...rangeArg,
+    { name: "options", type: QueryItemsOptions, optional: true },
+  ];
 
   const expressionAttributeNames = `{
     ${createNameExpression(hash)},
@@ -124,35 +132,42 @@ export const createQueryGSI = (
 
   const keyConditionExpression = createKeyConditionExpression(
     [hash],
-    optionalExpKeys
+    optionalConditionKeys
   );
 
-  return `
-    export async function ${funcName}<${generic}>(${args}): Promise<DDBResult<${generic}[]>> {
+  const body = `
+    const res = await ${dbClient}
+      .query({
+        ...options,
+        TableName: "${TableName}", 
+        IndexName: "${IndexName}",
+        ExpressionAttributeNames: ${expressionAttributeNames},
+        ExpressionAttributeValues: ${expressionAttributeValues},
+        KeyConditionExpression: ${keyConditionExpression}
+      })
+      .promise();
 
-      const res = await ${dbClient}
-        .query({
-          ...options,
-          TableName: "${TableName}", 
-          IndexName: "${IndexName}",
-          ExpressionAttributeNames: ${expressionAttributeNames},
-          ExpressionAttributeValues: ${expressionAttributeValues},
-          KeyConditionExpression: \`${keyConditionExpression}\`
-        })
-        .promise();
-
-      if (res.$response.error || !res.Items?.length) {
-        return {
-          ${DDBResultSuccessKey}: false,
-          ${DDBResultErrorKey}: res.$response.error
-            ? res.$response.error.message
-            : "${ErrorMessage}",
-        };
-      }
-
+    if (res.$response.error || !res.Items?.length) {
       return {
-        ${DDBResultSuccessKey}: true,
-        ${DDBResultDataKey}: res.Items as ${generic}[],
+        ${DDBResultSuccessKey}: false,
+        ${DDBResultErrorKey}: res.$response.error
+          ? res.$response.error.message
+          : "${ErrorMessage}",
       };
-    }`;
+    }
+
+    return {
+      ${DDBResultSuccessKey}: true,
+      ${DDBResultDataKey}: res.Items as ${generic}[],
+    };
+  `;
+
+  return buildFunction({
+    args,
+    body,
+    name: funcName,
+    returnType: `${DDBResultType}<${generic}[]>`,
+    generics: [generic],
+    async: true,
+  });
 };

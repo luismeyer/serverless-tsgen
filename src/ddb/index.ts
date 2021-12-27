@@ -1,6 +1,6 @@
 import { ChainLink } from "../chain";
 import { collectOutput } from "../generator";
-import { createGetItem, GetItemOptionsType } from "./get";
+import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
 import { createQueryGSI, QueryItemOptionsType } from "./query";
 import { createDDBTypes } from "./types";
@@ -26,7 +26,7 @@ export const ddbLink: ChainLink = {
     collectOutput(
       importStatement,
       ddbUtilTypes,
-      GetItemOptionsType,
+      GetItemOptions,
       QueryItemOptionsType
     );
 
@@ -47,9 +47,7 @@ export const ddbLink: ChainLink = {
       tableDefinition.Properties.GlobalSecondaryIndexes.forEach((index) => {
         const queryGSI = createQueryGSI(tableDefinition, index);
 
-        if (queryGSI) {
-          collectOutput(queryGSI);
-        }
+        collectOutput(queryGSI);
       });
     });
   },
