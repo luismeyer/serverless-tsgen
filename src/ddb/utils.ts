@@ -1,5 +1,4 @@
-import { AttributeDefinitions, KeySchema } from "aws-sdk/clients/dynamodb";
-import { log } from "../logger";
+import { AttributeDefinitions } from "aws-sdk/clients/dynamodb";
 
 export const AWSKeyTypeMapping: Record<string, string> = {
   S: "string",

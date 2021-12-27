@@ -96,4 +96,36 @@ export type Serverless = {
    * The CLI object which allows logging to the console.
    */
   cli: CLI;
+
+  // https://www.serverless.com/framework/docs/guides/plugins/custom-configuration
+  configSchemaHandler: {
+    defineTopLevelProperty: (
+      plugin: string,
+      jsonSchema: Record<string, any>
+    ) => void;
+
+    defineCustomProperties: (jsonSchema: Record<string, any>) => void;
+
+    defineFunctionEvent: (
+      providerName: string,
+      pluginEvent: string,
+      jsonSchema: Record<string, any>
+    ) => void;
+
+    defineFunctionEventProperties: (
+      providerName: string,
+      event: string,
+      jsonSchema: Record<string, any>
+    ) => void;
+
+    defineFunctionProperties: (
+      providerName: string,
+      jsonSchema: Record<string, any>
+    ) => void;
+
+    defineProvider: (
+      providerName: string,
+      jsonSchema: Record<string, any>
+    ) => void;
+  };
 };
