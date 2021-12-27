@@ -1,5 +1,6 @@
 import { ChainLink } from "../chain";
 import { collectOutput } from "../generator";
+import { log } from "../logger";
 import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
 import { createQueryGSI, QueryItemOptionsType } from "./query";
@@ -39,7 +40,14 @@ export const ddbLink: ChainLink = {
     );
 
     ddbTables.forEach(([key, tableDefinition]) => {
-      const getItem = createGetItem(key, tableDefinition);
+      if (!tableDefinition.Properties.TableName) {
+        return log(
+          "warning",
+          `Missing TableName for resource: "${key}". Cannot generate code for tables without a custom name.`
+        );
+      }
+
+      const getItem = createGetItem(tableDefinition);
       if (getItem) {
         collectOutput(getItem);
       }

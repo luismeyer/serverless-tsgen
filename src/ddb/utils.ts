@@ -28,9 +28,9 @@ export const transformAWSType = (type: string, isKey?: boolean) => {
     return typeString;
   }
 
+  const typeSuggestions = isKey ? AWSKeyTypes : AWSTypes.join(",");
   throw new Error(`
-    Wrong attribute type. ${type} isn't a valid type. 
-    Expected one of ${isKey ? AWSKeyTypes : AWSTypes.join(",")}
+    Wrong attribute type. "${type}" isn't a valid type. Expected one of ${typeSuggestions}
   `);
 };
 
@@ -44,13 +44,13 @@ export const typeDefinition = (
   attributeName: string,
   attributeDefinitions: AttributeDefinitions,
   isKey?: boolean
-) => {
+): string | undefined => {
   const definition = attributeDefinitions.find(
     ({ AttributeName }) => AttributeName === attributeName
   );
 
   if (!definition) {
-    throw new Error(`Missing attribute definition for ${attributeName}`);
+    return;
   }
 
   return transformAWSType(definition.AttributeType, isKey);

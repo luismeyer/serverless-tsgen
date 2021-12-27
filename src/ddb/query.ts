@@ -20,10 +20,10 @@ import {
 
 const QueryItemsOptions = "QueryItemsOptions";
 
-const ErrorMessage = "Query item error";
+const ErrorMessage = "Unknown query item error";
 
 /**
- * Reduced get item options. Based on GetItemInput of AWS sdk
+ * Reduced get item options. Based on QueryInput of AWS sdk
  */
 export const QueryItemOptionsType = `
   type ${QueryItemsOptions} = Omit<${DocumentClient}.QueryInput, "TableName" | "IndexName">;
@@ -36,7 +36,9 @@ export const createQueryGSI = (
   { IndexName, KeySchema }: GlobalSecondaryIndexInfo
 ): string => {
   if (!IndexName) {
-    throw new Error(`Missing index name in table: ${TableName}`);
+    throw new Error(
+      `Missing global secondary index name in table: "${TableName}"`
+    );
   }
 
   const parsedIndexName = camelcase(IndexName, { pascalCase: true });
@@ -44,7 +46,9 @@ export const createQueryGSI = (
   const funcName = `query${parsedTablename}${parsedIndexName}`;
 
   if (!KeySchema) {
-    throw new Error(`Missing key schema for ${IndexName}`);
+    throw new Error(
+      `Missing key schema for global secondary index: "${IndexName}"`
+    );
   }
 
   let hash: string | undefined;
@@ -57,28 +61,30 @@ export const createQueryGSI = (
   KeySchema.forEach((schema) => {
     if (schema.KeyType === "HASH") {
       hash = schema.AttributeName;
-      hashType = typeDefinition(hash, AttributeDefinitions, true) ?? "";
+      hashType = typeDefinition(hash, AttributeDefinitions, true);
     }
 
     if (schema.KeyType === "RANGE") {
       range = schema.AttributeName;
-      rangeType = typeDefinition(range, AttributeDefinitions, true) ?? "";
+      rangeType = typeDefinition(range, AttributeDefinitions, true);
     }
   });
 
   if (!hash) {
-    throw new Error(`Missing hash key in global secondary index: ${IndexName}`);
+    throw new Error(
+      `Missing hash key in global secondary index: "${IndexName}"`
+    );
   }
 
   if (!hashType) {
     throw new Error(
-      `Missing hash key in attribute definitions for global secondary index: ${IndexName}`
+      `Missing attribute definition for hash key: "${hash}" in global secondary index: "${IndexName}" in table: "${TableName}"`
     );
   }
 
   if (range && !rangeType) {
     throw new Error(
-      `Missing range key in attribute definitions for global secondary index: ${IndexName}`
+      `Missing attribute definition for range key "${range}" in global secondary index: "${IndexName}" in table "${TableName}"`
     );
   }
 

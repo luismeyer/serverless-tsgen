@@ -37,7 +37,7 @@ export async function getQzmkrTable<T>(
       success: false,
       error: res.$response.error
         ? res.$response.error.message
-        : "Get item error",
+        : "Unknown get item error",
     };
   }
 
@@ -75,7 +75,7 @@ export async function queryQzmkrTableNameBirthIndex<T>(
       success: false,
       error: res.$response.error
         ? res.$response.error.message
-        : "Query item error",
+        : "Unknown query item error",
     };
   }
 
@@ -109,7 +109,7 @@ export async function queryQzmkrTableNameIndex<T>(
       success: false,
       error: res.$response.error
         ? res.$response.error.message
-        : "Query item error",
+        : "Unknown query item error",
     };
   }
 

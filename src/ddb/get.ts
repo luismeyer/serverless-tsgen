@@ -13,7 +13,7 @@ import {
 import { typeDefinition } from "./utils";
 
 const GetItemOptionsType = "GetItemOptions";
-const ErrorMessage = "Get item error";
+const ErrorMessage = "Unknown get item error";
 
 /**
  * Reduced get item options. Based on GetItemInput of AWS sdk
@@ -26,36 +26,29 @@ const generic = "T";
 
 /**
  * Creates the GetItem function
- * @param resourceKey Key of the DDB resource
- * @param table Table resource
+ * @param table Cloudformation table resource
  * @returns GetItem function definition as a string
  */
-export const createGetItem = (
-  resourceKey: string,
-  table: DynamoDBResource
-): string | undefined => {
+export const createGetItem = (table: DynamoDBResource): string | undefined => {
   const { TableName, AttributeDefinitions, KeySchema } = table.Properties;
-  if (!TableName) {
-    return void log("error", `Missing TableName for resource: ${resourceKey}`);
-  }
 
   const funcName = `get${camelcase(TableName, { pascalCase: true })}`;
 
   const hashKey = KeySchema.find((key) => key.KeyType === "HASH");
   if (!hashKey) {
-    throw new Error(`Missing hash key for table: ${TableName}`);
+    throw new Error(`Missing hash key for table: "${TableName}"`);
   }
 
   // Retrieve the type of the primary key
   const hashKeyType = typeDefinition(
-    hashKey.AttributeName ?? "",
+    hashKey.AttributeName,
     AttributeDefinitions,
     true
   );
 
   if (!hashKeyType) {
     throw new Error(
-      `Missing hash key in attribute definitions of table: ${TableName}`
+      `Missing attribute definitions for hash key: "${hashKey.AttributeName}" in table: "${TableName}"`
     );
   }
 
