@@ -1,7 +1,7 @@
 import { GlobalSecondaryIndexInfo } from "aws-sdk/clients/dynamodb";
 import camelcase from "camelcase";
 
-import { log } from "../logger";
+import { Logger } from "../Logger";
 import { DynamoDBResource } from "../types";
 import { buildFunction, FunctionArg } from "../typescript/function";
 import { dbClient, DocumentClient } from "./import";
@@ -18,15 +18,15 @@ import {
   typeDefinition,
 } from "./utils";
 
-const QueryItemsOptions = "QueryItemsOptions";
+const QueryItemOptionsType = "QueryItemsOptions";
 
 const ErrorMessage = "Unknown query item error";
 
 /**
  * Reduced get item options. Based on QueryInput of AWS sdk
  */
-export const QueryItemOptionsType = `
-  type ${QueryItemsOptions} = Omit<${DocumentClient}.QueryInput, "TableName" | "IndexName">;
+export const QueryItemsOptions = `
+  type ${QueryItemOptionsType} = Omit<${DocumentClient}.QueryInput, "TableName" | "IndexName">;
 `;
 
 const generic = "T";
@@ -41,7 +41,10 @@ export const createQueryGSI = (
     );
   }
 
-  log("debug", `Creating DynamoDB queryGSI function for index: "${IndexName}"`);
+  Logger.log(
+    "debug",
+    `Creating DynamoDB queryGSI function for index: "${IndexName}"`
+  );
 
   const parsedIndexName = camelcase(IndexName, { pascalCase: true });
   const parsedTablename = camelcase(TableName, { pascalCase: true });

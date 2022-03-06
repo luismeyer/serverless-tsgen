@@ -1,4 +1,4 @@
-import { log } from "../logger";
+import { Logger } from "../Logger";
 import { Serverless } from "../types/serverless";
 import { ChainLink } from "./chain-link";
 
@@ -39,10 +39,10 @@ export class Chain {
    */
   public execute(serverless: Serverless) {
     if (!this.firstChainLink) {
-      return log("error", "Missing start link in chain");
+      return Logger.log("error", "Missing start link in chain");
     }
 
-    log("debug", "Executing chain");
+    Logger.log("debug", "Executing chain");
 
     this.firstChainLink?.process(serverless);
   }

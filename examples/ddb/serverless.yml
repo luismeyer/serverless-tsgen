@@ -20,7 +20,6 @@ resources:
   Resources:
     UserTable:
       Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Delete
       Properties:
         AttributeDefinitions:
           - AttributeName: id

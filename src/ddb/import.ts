@@ -1,15 +1,15 @@
-import { log } from "../logger";
+import { Logger } from "../Logger";
 
 export const DocumentClient = "DocumentClient";
 export const dbClient = "ddbClient";
 
 /**
- * Creates this statements:
+ * Creates ddb import statement
  * @param region AWS region
- * @returns Import and service decleration node
+ * @returns Import and service declaration node
  */
 export const createDDBImport = (region?: string): string => {
-  log("debug", "Creating DynamoDB imports");
+  Logger.log("debug", "Creating DynamoDB imports");
 
   const options = JSON.stringify({ region });
 

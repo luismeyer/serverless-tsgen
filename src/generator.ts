@@ -1,37 +1,56 @@
 import { existsSync, rmSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import prettier from "prettier";
 
-import { log } from "./logger";
+import { Logger } from "./Logger";
 import { Custom } from "./types";
 
-// default output file
-let outputFile = "serverless.ts";
+export class Generator {
+  // default output file
+  private outputFile = "serverless.ts";
+  private outputData: string[] = [];
 
-let outputData: string[] = [];
+  private static _generator: Generator;
 
-export const initOutput = (custom?: Custom) => {
-  if (!custom) {
-    log("notice", "Missing custom config in serverless.yml");
-    return;
+  private constructor() {}
+
+  public static get instance(): Generator {
+    if (!this._generator) {
+      this._generator = new Generator();
+    }
+
+    return this._generator;
   }
 
-  if (custom.tsgen?.outfile) {
-    outputFile = resolve(custom.tsgen.outfile);
+  public init(custom?: Custom) {
+    if (!custom) {
+      Logger.log("notice", "Missing custom config in serverless.yml");
+      return;
+    }
+
+    if (custom.tsgen?.outfile) {
+      this.outputFile = resolve(custom.tsgen.outfile);
+    }
+
+    if (existsSync(this.outputFile)) {
+      rmSync(this.outputFile, { force: true });
+    }
+
+    writeFileSync(this.outputFile, "");
   }
 
-  if (existsSync(outputFile)) {
-    rmSync(outputFile, { force: true });
+  public collectOutput(...data: string[]) {
+    this.outputData = [...this.outputData, ...data];
   }
 
-  writeFileSync(outputFile, "");
-};
+  public generateOutput() {
+    Logger.log("notice", "Generating typescript files");
 
-export const collectOutput = (...data: string[]) => {
-  outputData = [...outputData, ...data];
-};
+    const output = prettier.format(this.outputData.join("\n"), {
+      semi: false,
+      parser: "babel",
+    });
 
-export const generateOutput = () => {
-  log("notice", "Generating typescript files");
-
-  writeFileSync(outputFile, outputData.join("\n"));
-};
+    writeFileSync(this.outputFile, output);
+  }
+}

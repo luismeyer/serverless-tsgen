@@ -1,10 +1,10 @@
-import { collectOutput } from "../generator";
-import { log } from "../logger";
+import { Generator } from "../Generator";
+import { Logger } from "../Logger";
 import { ChainLink } from "../models/chain-link";
 import { Serverless } from "../types";
 import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
-import { createQueryGSI, QueryItemOptionsType } from "./query";
+import { createQueryGSI, QueryItemsOptions } from "./query";
 import { createDDBTypes } from "./types";
 
 /**
@@ -16,7 +16,7 @@ function processDDB(serverless: Serverless) {
   const { service } = serverless;
 
   if (!service.resources) {
-    return log("debug", "No cloudformation resources to handle");
+    return Logger.log("debug", "No cloudformation resources to handle");
   }
 
   // Creates import and setup ddbClient
@@ -26,11 +26,11 @@ function processDDB(serverless: Serverless) {
   const ddbUtilTypes = createDDBTypes();
 
   // Collect imports and utility types
-  collectOutput(
+  Generator.instance.collectOutput(
     importStatement,
     ddbUtilTypes,
     GetItemOptions,
-    QueryItemOptionsType
+    QueryItemsOptions
   );
 
   // Unwrap the cloudformation input
@@ -42,10 +42,10 @@ function processDDB(serverless: Serverless) {
   );
 
   ddbTables.forEach(([key, tableDefinition]) => {
-    log("debug", `Handling DynamoDB resource ${key}`);
+    Logger.log("debug", `Handling DynamoDB resource ${key}`);
 
     if (!tableDefinition.Properties.TableName) {
-      return log(
+      return Logger.log(
         "warning",
         `Missing TableName for resource: "${key}". Cannot generate code for tables without a custom name.`
       );
@@ -53,13 +53,13 @@ function processDDB(serverless: Serverless) {
 
     const getItem = createGetItem(tableDefinition);
     if (getItem) {
-      collectOutput(getItem);
+      Generator.instance.collectOutput(getItem);
     }
 
     tableDefinition.Properties.GlobalSecondaryIndexes.forEach((index) => {
       const queryGSI = createQueryGSI(tableDefinition, index);
 
-      collectOutput(queryGSI);
+      Generator.instance.collectOutput(queryGSI);
     });
   });
 }

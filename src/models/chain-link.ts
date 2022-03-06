@@ -1,4 +1,4 @@
-import { log } from "../logger";
+import { Logger } from "../Logger";
 import { Serverless } from "../types";
 
 type ProcessFc = (serverless: Serverless) => void;
@@ -30,10 +30,10 @@ export abstract class ChainLink {
 
   public process(serverless: Serverless) {
     if (!this.canProcess(serverless)) {
-      return log("debug", `${this.key} link can't handle serverless.yml`);
+      Logger.log("debug", `${this.key} link can't handle serverless.yml`);
+    } else {
+      this.processFc(serverless);
     }
-
-    this.processFc(serverless);
 
     this.next?.process(serverless);
   }

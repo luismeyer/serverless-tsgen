@@ -1,6 +1,6 @@
 import camelcase from "camelcase";
 
-import { log } from "../logger";
+import { Logger } from "../Logger";
 import { DynamoDBResource } from "../types";
 import { buildFunction } from "../typescript/function";
 import { dbClient, DocumentClient } from "./import";
@@ -31,7 +31,10 @@ const generic = "T";
  */
 export const createGetItem = (table: DynamoDBResource): string | undefined => {
   const { TableName, AttributeDefinitions, KeySchema } = table.Properties;
-  log("debug", `Creating DynamoDB getItem function for table "${TableName}"`);
+  Logger.log(
+    "debug",
+    `Creating DynamoDB getItem function for table "${TableName}"`
+  );
 
   const funcName = `get${camelcase(TableName, { pascalCase: true })}`;
 

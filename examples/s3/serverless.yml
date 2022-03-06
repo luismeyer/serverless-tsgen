@@ -1,0 +1,24 @@
+service: s3-example
+
+provider:
+  memorySize: 128
+  name: aws
+  region: eu-central-1
+  runtime: nodejs14.x
+  stage: dev
+
+custom:
+  tsgen:
+    outfile: src/serverless.ts
+    resources:
+      - s3
+
+plugins:
+  - ../../lib/main.js
+
+resources:
+  Resources:
+    TestBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: Bucki

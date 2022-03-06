@@ -1,6 +1,6 @@
 import { DDBChainLink } from "./ddb";
-import { generateOutput, initOutput } from "./generator";
-import { initLogger, log } from "./logger";
+import { Generator } from "./Generator";
+import { Logger } from "./Logger";
 import { Chain } from "./models/chain";
 import { S3ChainLink } from "./s3";
 import { Serverless, ServerlessPlugin } from "./types";
@@ -49,14 +49,14 @@ export class ServerlessTSGen extends ServerlessPlugin {
      * v3 we can change the logging behaviour easily by
      * plugging the new log functions into our logger
      */
-    initLogger({
+    Logger.init({
       debug: serverless.cli.log,
       error: serverless.cli.log,
       notice: serverless.cli.log,
       warning: serverless.cli.log,
     });
 
-    initOutput(serverless.service.custom);
+    Generator.instance.init(serverless.service.custom);
 
     this.commands = {
       tsgen: {
@@ -67,14 +67,14 @@ export class ServerlessTSGen extends ServerlessPlugin {
 
     this.hooks = {
       "tsgen:run": () => {
-        log("notice", "Execute tsgen plugin");
+        Logger.log("notice", "Executing tsgen plugin...");
 
         ResourceChain.execute(serverless);
       },
       "after:tsgen:run": () => {
-        log("notice", "After tsgen plugin execution");
+        Logger.log("notice", "After tsgen plugin execution");
 
-        generateOutput();
+        Generator.instance.generateOutput();
       },
     };
   }
