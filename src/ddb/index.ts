@@ -5,7 +5,6 @@ import { Serverless } from "../types";
 import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
 import { createQueryGSI, QueryItemsOptions } from "./query";
-import { createDDBTypes } from "./types";
 
 /**
  * Processes the DynamoDB resources
@@ -22,15 +21,11 @@ function processDDB(serverless: Serverless) {
   // Creates import and setup ddbClient
   const importStatement = createDDBImport(service.provider?.region);
 
-  // Generate result types
-  const ddbUtilTypes = createDDBTypes();
-
   // Collect imports and utility types
   Generator.instance.collectOutput(
     importStatement,
-    ddbUtilTypes,
-    GetItemOptions,
-    QueryItemsOptions
+    QueryItemsOptions,
+    GetItemOptions
   );
 
   // Unwrap the cloudformation input

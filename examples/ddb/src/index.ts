@@ -1,32 +1,33 @@
 import {
-  getQzmkrTable,
-  queryQzmkrTableNameBirthIndex,
-  queryQzmkrTableNameIndex,
+  getTest,
+  queryTestNameIndex,
+  queryTestNameBirthIndex,
 } from "./serverless";
 
-type User = {
-  id: string;
-  birth: number;
-  name: string;
-};
-
 const run = async () => {
-  const getResponse = await getQzmkrTable<User>("1");
+  const getResponse = await getTest({ Key: { id: "123" } });
 
-  if (getResponse.success) {
-    console.log("Get user ", getResponse.data);
+  if (getResponse.Item) {
+    console.log("Get user ", getResponse.Item);
   }
 
-  const queryResponse = await queryQzmkrTableNameIndex<User>("frank");
+  const queryResponse = await queryTestNameIndex({
+    ExpressionAttributeNames: { "#name": "name" },
+    ExpressionAttributeValues: { ":name": "luis" },
+    KeyConditionExpression: `#name = :name`,
+  });
 
-  if (queryResponse.success) {
-    console.log("Query users ", queryResponse.data);
+  if (queryResponse.Items) {
+    console.log("Query users ", queryResponse.Items);
   }
 
-  const secondQueryResponse = await queryQzmkrTableNameBirthIndex<User>(12);
+  const secondQueryResponse = await queryTestNameBirthIndex({
+    ExpressionAttributeValues: { ":birth": 100 },
+    KeyConditionExpression: "birth = :birth",
+  });
 
-  if (secondQueryResponse.success) {
-    console.log("Query users ", secondQueryResponse.data);
+  if (secondQueryResponse.Items) {
+    console.log("Query users ", secondQueryResponse.Items);
   }
 };
 

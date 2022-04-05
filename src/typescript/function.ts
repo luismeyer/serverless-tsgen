@@ -7,7 +7,7 @@ export type FunctionArg = {
 export type FunctionSignatureOptions = {
   name: string;
   args: FunctionArg[];
-  returnType: string;
+  returnType?: string;
   async?: boolean;
   generics?: string[];
 };
@@ -27,7 +27,7 @@ const buildFunctionSignature = ({
   generics,
 }: FunctionSignatureOptions) => {
   const asyncModifier = async ? "async" : "";
-  const completeReturnType = async ? `Promise<${returnType}>` : returnType;
+  const parsedReturnType = async ? `Promise<${returnType}>` : returnType;
 
   const parsedArgs = args
     .map((arg) => `${arg.name}${arg.optional ? "?" : ""}: ${arg.type}`)
@@ -35,8 +35,10 @@ const buildFunctionSignature = ({
 
   const parsedGenerics = generics ? `<${generics.join(",")}>` : "";
 
+  const returnSignature = returnType ? `: ${parsedReturnType}` : "";
+
   return `
-    export ${asyncModifier} function ${name}${parsedGenerics}(${parsedArgs}): ${completeReturnType}
+    export ${asyncModifier} function ${name}${parsedGenerics}(${parsedArgs})${returnSignature}
   `;
 };
 
