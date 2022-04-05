@@ -1,9 +1,8 @@
-import camelcase from "camelcase";
-
 import { Logger } from "../Logger";
 import { DynamoDBResource } from "../types";
 import { buildFunction, FunctionArg } from "../typescript/function";
 import { dbClient, DocumentClient } from "./import";
+import { camelCase, NameVariable } from "./name";
 import { typeDefinition } from "./utils";
 
 const GetItemOptionsType = "GetItemOptions";
@@ -20,14 +19,17 @@ export const GetItemOptions = `
  * @param table Cloudformation table resource
  * @returns GetItem function definition as a string
  */
-export const createGetItem = (table: DynamoDBResource): string | undefined => {
+export const createGetItem = (
+  tableName: NameVariable,
+  table: DynamoDBResource
+): string | undefined => {
   const { TableName, AttributeDefinitions, KeySchema } = table.Properties;
   Logger.log(
     "debug",
     `Creating DynamoDB getItem function for table "${TableName}"`
   );
 
-  const funcName = `get${camelcase(TableName, { pascalCase: true })}`;
+  const funcName = camelCase("get", TableName);
 
   const hashKey = KeySchema.find((key) => key.KeyType === "HASH");
   if (!hashKey) {
@@ -55,7 +57,7 @@ export const createGetItem = (table: DynamoDBResource): string | undefined => {
   };
 
   const body = `
-    return ${dbClient}.get({ ...${optionsIdentifier}, TableName: "${TableName}" }).promise();
+    return ${dbClient}.get({ ...${optionsIdentifier}, TableName: ${tableName.identifier} }).promise();
   `;
 
   return buildFunction({

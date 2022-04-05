@@ -4,6 +4,7 @@ import { ChainLink } from "../models/chain-link";
 import { Serverless } from "../types";
 import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
+import { createIndexNameVariable, createTableNameVariable } from "./name";
 import { createQueryGSI, QueryItemsOptions } from "./query";
 
 /**
@@ -11,7 +12,7 @@ import { createQueryGSI, QueryItemsOptions } from "./query";
  * @param serverless Configurtion
  * @returns void
  */
-function processDDB(serverless: Serverless) {
+const processDDB = (serverless: Serverless) => {
   const { service } = serverless;
 
   if (!service.resources) {
@@ -37,27 +38,48 @@ function processDDB(serverless: Serverless) {
   );
 
   ddbTables.forEach(([key, tableDefinition]) => {
+    const { Properties } = tableDefinition;
+
     Logger.log("debug", `Handling DynamoDB resource ${key}`);
 
-    if (!tableDefinition.Properties.TableName) {
+    if (!Properties.TableName) {
       return Logger.log(
         "warning",
         `Missing TableName for resource: "${key}". Cannot generate code for tables without a custom name.`
       );
     }
 
-    const getItem = createGetItem(tableDefinition);
+    const tableNameVariable = createTableNameVariable(Properties.TableName);
+
+    Generator.instance.collectOutput(tableNameVariable.definition);
+
+    const getItem = createGetItem(tableNameVariable, tableDefinition);
+
     if (getItem) {
       Generator.instance.collectOutput(getItem);
     }
 
-    tableDefinition.Properties.GlobalSecondaryIndexes.forEach((index) => {
-      const queryGSI = createQueryGSI(tableDefinition, index);
+    Properties.GlobalSecondaryIndexes.forEach((index) => {
+      if (!index.IndexName) {
+        return Logger.log(
+          "warning",
+          `Missing IndexName for resource: "${index}".`
+        );
+      }
 
-      Generator.instance.collectOutput(queryGSI);
+      const indexNameVariable = createIndexNameVariable(index.IndexName);
+
+      const queryGSI = createQueryGSI({
+        tableName: tableNameVariable,
+        indexName: indexNameVariable,
+        tableResource: tableDefinition,
+        indexInfo: index,
+      });
+
+      Generator.instance.collectOutput(indexNameVariable.definition, queryGSI);
     });
   });
-}
+};
 
 export class DDBChainLink extends ChainLink {
   constructor() {

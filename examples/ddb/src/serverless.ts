@@ -8,18 +8,22 @@ type QueryItemsOptions = Omit<
 
 type GetItemOptions = Omit<DocumentClient.GetItemInput, "TableName">
 
-export async function getTest(options: GetItemOptions) {
-  return ddbClient.get({ ...options, TableName: "Test" }).promise()
-}
+export const TEST_TABLE = "Test"
 
-export async function queryTestNameBirthIndex(options: QueryItemsOptions) {
+export async function getTest(options: GetItemOptions) {
+  return ddbClient.get({ ...options, TableName: TEST_TABLE }).promise()
+}
+export const NAME_BIRTH_INDEX = "nameBirthIndex"
+
+export async function queryTestnameBirthIndex(options: QueryItemsOptions) {
   return ddbClient
-    .query({ ...options, TableName: "Test", IndexName: "nameBirthIndex" })
+    .query({ ...options, TableName: TEST_TABLE, IndexName: NAME_BIRTH_INDEX })
     .promise()
 }
+export const NAME_INDEX = "nameIndex"
 
-export async function queryTestNameIndex(options: QueryItemsOptions) {
+export async function queryTestnameIndex(options: QueryItemsOptions) {
   return ddbClient
-    .query({ ...options, TableName: "Test", IndexName: "nameIndex" })
+    .query({ ...options, TableName: TEST_TABLE, IndexName: NAME_INDEX })
     .promise()
 }
