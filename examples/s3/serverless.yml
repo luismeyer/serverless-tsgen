@@ -21,4 +21,4 @@ resources:
     TestBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: Bucki
+        BucketName: luis-lara-frontend

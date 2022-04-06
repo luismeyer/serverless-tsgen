@@ -1,10 +1,10 @@
 import { Generator } from "../Generator";
 import { Logger } from "../Logger";
 import { ChainLink } from "../models/chain-link";
-import { Serverless } from "../types";
+import { createNameVariable } from "../name";
+import { isDynamoDBResource, Serverless } from "../types";
 import { createGetItem, GetItemOptions } from "./get";
 import { createDDBImport } from "./import";
-import { createIndexNameVariable, createTableNameVariable } from "./name";
 import { createQueryGSI, QueryItemsOptions } from "./query";
 
 /**
@@ -38,6 +38,10 @@ const processDDB = (serverless: Serverless) => {
   );
 
   ddbTables.forEach(([key, tableDefinition]) => {
+    if (!isDynamoDBResource(tableDefinition)) {
+      return;
+    }
+
     const { Properties } = tableDefinition;
 
     Logger.log("debug", `Handling DynamoDB resource ${key}`);
@@ -49,7 +53,7 @@ const processDDB = (serverless: Serverless) => {
       );
     }
 
-    const tableNameVariable = createTableNameVariable(Properties.TableName);
+    const tableNameVariable = createNameVariable(Properties.TableName, "TABLE");
 
     Generator.instance.collectOutput(tableNameVariable.definition);
 
@@ -67,7 +71,7 @@ const processDDB = (serverless: Serverless) => {
         );
       }
 
-      const indexNameVariable = createIndexNameVariable(index.IndexName);
+      const indexNameVariable = createNameVariable(index.IndexName, "INDEX");
 
       const queryGSI = createQueryGSI({
         tableName: tableNameVariable,

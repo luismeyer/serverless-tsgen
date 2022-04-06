@@ -4,7 +4,7 @@ import { Logger } from "../Logger";
 import { DynamoDBResource } from "../types";
 import { buildFunction, FunctionArg } from "../typescript/function";
 import { dbClient, DocumentClient } from "./import";
-import { camelCase, NameVariable } from "./name";
+import { camelCase, NameVariable } from "../name";
 
 const QueryItemOptionsType = "QueryItemsOptions";
 

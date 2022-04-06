@@ -19,11 +19,28 @@ export type DynamoDBResource = {
   };
 };
 
+export type S3Resource = {
+  Type: "AWS::S3::Bucket";
+  DeletionPolicy: "Delete" | "Retain";
+  Properties: {
+    BucketName?: string;
+  };
+};
+
+export type AWSResource = DynamoDBResource | S3Resource;
+
+export const isDynamoDBResource = (
+  resource: AWSResource
+): resource is DynamoDBResource => resource.Type === "AWS::DynamoDB::Table";
+
+export const isS3Resource = (resource: AWSResource): resource is S3Resource =>
+  resource.Type === "AWS::S3::Bucket";
+
 /**
  * Collection of resources.
  */
 export type Resources = {
   Resources: {
-    [name: string]: DynamoDBResource;
+    [name: string]: AWSResource;
   };
 };
